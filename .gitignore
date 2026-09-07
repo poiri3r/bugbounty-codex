@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+credentials.*
+secrets.*
+token.*
+*.key
+*.pem
+
+plugins/
+work/
+findings/
+
+*.log
+*.pcap
+*.har
+cookies.txt

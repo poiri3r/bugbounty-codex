@@ -1,0 +1,90 @@
+name: bugbounty-codex
+
+services:
+  db:
+    image: mariadb:11.8.9@sha256:2439dcd7d14010ecd1ff7a4e1c5abe8e208c34fe35290744deeeaac3569043c3
+    environment:
+      MARIADB_DATABASE: ${MARIADB_DATABASE:?set MARIADB_DATABASE in .env}
+      MARIADB_USER: ${MARIADB_USER:?set MARIADB_USER in .env}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:?set MARIADB_PASSWORD in .env}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:?set MARIADB_ROOT_PASSWORD in .env}
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - lab
+
+  wordpress:
+    image: wordpress:7.1.0-php8.3-apache@sha256:5a93c470ae8220fddf71f6ebe3bc94e615ddc2ae4d9810f795b830fb11c41a17
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: ${MARIADB_DATABASE:?set MARIADB_DATABASE in .env}
+      WORDPRESS_DB_USER: ${MARIADB_USER:?set MARIADB_USER in .env}
+      WORDPRESS_DB_PASSWORD: ${MARIADB_PASSWORD:?set MARIADB_PASSWORD in .env}
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HTTP_BLOCK_EXTERNAL', true);
+        define('AUTOMATIC_UPDATER_DISABLED', true);
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 80) ? 0 : 1);"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - wordpress-data:/var/www/html
+    networks:
+      - lab
+
+  gateway:
+    image: nginx:1.30.4-alpine@sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c
+    command: ["/bin/sh", "-c", "ip route del default && exec su -s /bin/sh nginx -c 'exec nginx -g \"daemon off;\"'"]
+    cap_add:
+      - NET_ADMIN
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      wordpress:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${WP_PORT:-8080}:8080"
+    volumes:
+      - ./lab/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - lab
+      - ingress
+
+  cli:
+    image: wordpress:cli-2.12.0-php8.3@sha256:2b5e9d4d3e51909dca1aaa4732e9f5e5bf0377c2114dbd8ff39f060bff202586
+    entrypoint: ["wp"]
+    profiles: ["tools"]
+    depends_on:
+      db:
+        condition: service_healthy
+      wordpress:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: ${MARIADB_DATABASE:?set MARIADB_DATABASE in .env}
+      WORDPRESS_DB_USER: ${MARIADB_USER:?set MARIADB_USER in .env}
+      WORDPRESS_DB_PASSWORD: ${MARIADB_PASSWORD:?set MARIADB_PASSWORD in .env}
+    user: "33:33"
+    volumes:
+      - wordpress-data:/var/www/html
+      - ./plugins:/plugins:ro
+    networks:
+      - lab
+
+volumes:
+  db-data:
+  wordpress-data:
+
+networks:
+  lab:
+    internal: true
+  ingress:
