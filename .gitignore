@@ -1,3 +1,12 @@
+# Harness-local credentials and transient work
+/tmp/
+/inbox/
+/evidence/
+/project/services/
+project/CREDENTIAL.md
+report/F-*/
+
+# Project secrets and local lab state
 .env
 .env.*
 !.env.example
@@ -7,11 +16,13 @@ token.*
 *.key
 *.pem
 
-plugins/
+# Legacy private research archives
 work/
 findings/
 
+# Captures and logs
 *.log
 *.pcap
 *.har
 cookies.txt
+browser-profile/

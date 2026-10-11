@@ -1,0 +1,47 @@
+{
+  "status": "draft",
+  "software": {
+    "type": "WordPress Plugin",
+    "name": "",
+    "slug": "",
+    "version": "",
+    "url": ""
+  },
+  "vulnerability": {
+    "title": "",
+    "description": "",
+    "type": "",
+    "impact": "",
+    "cwe": "",
+    "authentication": ""
+  },
+  "affected_code_urls": [],
+  "references": [],
+  "contributors": [],
+  "poc": {
+    "type": "Python",
+    "body": ""
+  },
+  "video": {
+    "path": "video/poc.mp4",
+    "playback_review": "PENDING",
+    "visible_result": ""
+  },
+  "environment": {
+    "wordpress": "",
+    "php": "",
+    "database": "",
+    "settings": "",
+    "attacker_role": ""
+  },
+  "certification": {
+    "tested": true,
+    "ai_used": true,
+    "cve_requested_elsewhere": false,
+    "reported_to_other_vendor": false
+  },
+  "submission": {
+    "submitted_at": null,
+    "submission_id": null
+  }
+}
